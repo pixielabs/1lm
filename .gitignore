@@ -1,0 +1,46 @@
+# Binaries
+1lm
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Go workspace file
+go.work
+
+# Dependency directories
+vendor/
+
+# Config files with secrets
+config.toml
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+*.tar.gz
+*.zip
+
+# Temporary files
+tmp/
+temp/
+
+# Claude Code stuff
+.claude/
+PLAN.md

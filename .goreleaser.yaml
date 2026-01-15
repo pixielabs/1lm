@@ -1,0 +1,104 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: 1lm
+    binary: 1lm
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+
+archives:
+  - id: 1lm
+    format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - README.md
+      - LICENSE
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^ci:'
+      - '^chore:'
+      - 'merge conflict'
+      - Merge pull request
+      - Merge remote-tracking branch
+      - Merge branch
+  groups:
+    - title: Features
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 0
+    - title: 'Bug fixes'
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 1
+    - title: Others
+      order: 999
+
+release:
+  draft: false
+  prerelease: auto
+  mode: append
+  header: |
+    ## 1lm {{ .Tag }}
+
+    LLM-powered CLI one-liner generator
+  footer: |
+    **Full Changelog**: https://github.com/pixielabs/1lm/compare/{{ .PreviousTag }}...{{ .Tag }}
+
+    ### Installation
+
+    #### macOS
+    ```bash
+    # Intel
+    curl -L https://github.com/pixielabs/1lm/releases/download/{{ .Tag }}/1lm_{{ .Tag }}_Darwin_x86_64.tar.gz | tar xz
+
+    # Apple Silicon
+    curl -L https://github.com/pixielabs/1lm/releases/download/{{ .Tag }}/1lm_{{ .Tag }}_Darwin_arm64.tar.gz | tar xz
+    ```
+
+    #### Linux
+    ```bash
+    # x86_64
+    curl -L https://github.com/pixielabs/1lm/releases/download/{{ .Tag }}/1lm_{{ .Tag }}_Linux_x86_64.tar.gz | tar xz
+
+    # ARM64
+    curl -L https://github.com/pixielabs/1lm/releases/download/{{ .Tag }}/1lm_{{ .Tag }}_Linux_arm64.tar.gz | tar xz
+    ```
+
+    Then move the binary to your PATH:
+    ```bash
+    sudo mv 1lm /usr/local/bin/
+    ```
