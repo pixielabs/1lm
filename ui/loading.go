@@ -6,7 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/jalada/1lm/commands"
+	"github.com/pixielabs/1lm/commands"
 )
 
 // LoadingModel represents the loading state with a spinner.

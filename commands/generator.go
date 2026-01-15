@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jalada/1lm/llm"
+	"github.com/pixielabs/1lm/llm"
 )
 
 // Generator handles command generation from natural language queries.

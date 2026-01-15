@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbletea"
-	"github.com/jalada/1lm/commands"
+	"github.com/pixielabs/1lm/commands"
 	"golang.org/x/term"
 )
 

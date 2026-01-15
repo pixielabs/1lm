@@ -36,7 +36,7 @@ Select a command:
 
 ### Prerequisites
 
-- Go 1.21 or later
+- Go 1.25 or later
 - macOS (for clipboard support via `pbcopy`) - Linux builds available but clipboard doesn't work yet
 - [Anthropic API key](https://console.anthropic.com/)
 

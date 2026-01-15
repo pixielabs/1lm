@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/jalada/1lm/llm"
+	"github.com/pixielabs/1lm/llm"
 )
 
 func TestGeneratorGenerate(t *testing.T) {

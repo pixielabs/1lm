@@ -8,10 +8,10 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/jalada/1lm/commands"
-	"github.com/jalada/1lm/config"
-	"github.com/jalada/1lm/llm"
-	"github.com/jalada/1lm/ui"
+	"github.com/pixielabs/1lm/commands"
+	"github.com/pixielabs/1lm/config"
+	"github.com/pixielabs/1lm/llm"
+	"github.com/pixielabs/1lm/ui"
 )
 
 func main() {

@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keyboard navigation (arrow keys and vim bindings)
 
 ### Technical
-- Built with Go 1.21+
+- Built with Go 1.25
 - Uses official anthropic-sdk-go
 - Structured outputs beta API with JSON Schema validation
 - Charmbracelet Bubbletea for TUI

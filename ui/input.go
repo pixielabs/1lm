@@ -5,7 +5,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/jalada/1lm/commands"
+	"github.com/pixielabs/1lm/commands"
 )
 
 // InputModel represents the text input prompt for queries.

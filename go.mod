@@ -1,4 +1,4 @@
-module github.com/jalada/1lm
+module github.com/pixielabs/1lm
 
 go 1.25.5
 
