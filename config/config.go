@@ -69,7 +69,11 @@ func Save(cfg *Config) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		if closeErr := file.Close(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
 
 	encoder := toml.NewEncoder(file)
 	return encoder.Encode(cfg)

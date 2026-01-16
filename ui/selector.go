@@ -103,8 +103,8 @@ func (m SelectorModel) View() string {
 		}
 
 		// Wrap command and description to terminal width
-		command := CommandStyle.Copy().Width(contentWidth).Render(option.Command)
-		description := DescriptionStyle.Copy().Width(contentWidth).Render(option.Description)
+		command := CommandStyle.Width(contentWidth).Render(option.Command)
+		description := DescriptionStyle.Width(contentWidth).Render(option.Description)
 
 		b.WriteString(fmt.Sprintf("%s %s\n", cursor, title))
 		b.WriteString(fmt.Sprintf("  %s\n", command))
