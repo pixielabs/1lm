@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/anthropics/anthropic-sdk-go"
+	"github.com/anthropics/anthropic-sdk-go/option"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/pixielabs/1lm/commands"
 	"github.com/pixielabs/1lm/config"
@@ -39,8 +41,13 @@ func run() error {
 		return fmt.Errorf("failed to create LLM client: %w", err)
 	}
 
+	// Create Anthropic client for safety evaluation
+	anthropicClient := anthropic.NewClient(
+		option.WithAPIKey(cfg.AnthropicAPIKey),
+	)
+
 	// Create generator
-	generator := commands.NewGenerator(client)
+	generator := commands.NewGenerator(client, &anthropicClient, cfg.Model)
 
 	var initialModel tea.Model
 

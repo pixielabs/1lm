@@ -28,9 +28,13 @@ Select a command:
 
 - **Multiple options**: Get 3 different approaches to choose from
 - **Interactive selection**: Arrow keys or vim bindings to navigate
+- **Safety warnings**: LLM-powered risk evaluation with visual indicators
+  - 🚨 High risk warnings for destructive operations (rm -rf, dd, etc.)
+  - ⚠️ Low risk warnings for network operations, scans, and privilege changes
 - **Clipboard ready**: Selected command automatically copied via `pbcopy`
 - **Context-aware**: Descriptions explain what each command does and any caveats
 - **Reliable**: Uses Anthropic's structured outputs API for guaranteed valid responses
+- **Real-time progress**: See "Generating options..." and "Evaluating safety..." as it works
 
 ## Installation
 
@@ -112,8 +116,9 @@ System info:
 
 1. **Query**: You describe what you want in natural language
 2. **Generate**: Claude generates 3 command options using structured outputs API
-3. **Select**: Interactive TUI shows options with explanations
-4. **Copy**: Selected command is copied to clipboard, ready to paste and run
+3. **Evaluate**: Claude assesses each command for safety risks (destructive ops, network activity)
+4. **Select**: Interactive TUI shows options with explanations and safety warnings
+5. **Copy**: Selected command is copied to clipboard, ready to paste and run
 
 Under the hood:
 - Uses [Anthropic SDK for Go](https://github.com/anthropics/anthropic-sdk-go) with structured outputs beta
@@ -155,6 +160,7 @@ Check:
 │   ├── provider.go  # Structured outputs implementation
 │   └── mock.go      # Mock for testing
 ├── commands/        # Command generation logic
+├── safety/          # LLM-based safety evaluation
 ├── ui/              # Bubbletea interactive selector
 └── tests/           # Unit tests
 ```
@@ -175,17 +181,18 @@ See [PLAN.md](PLAN.md) for detailed architecture decisions and roadmap.
 
 ## Roadmap
 
-### MVP (Complete ✓)
+### v0.2.0 (Complete ✓)
 - ✓ Anthropic Claude integration
 - ✓ Structured output with JSON schema
 - ✓ Interactive TUI
 - ✓ Clipboard support
 - ✓ TOML configuration
+- ✓ LLM-based safety warnings with visual indicators
+- ✓ Multi-stage progress indicator
 
 ### Fast follows
 - Shell integration (command insertion vs clipboard)
 - Context awareness (cwd, OS, installed tools)
-- Safety warnings for destructive commands
 
 ### Future
 - Multiple LLM provider support

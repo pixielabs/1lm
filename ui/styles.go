@@ -28,4 +28,14 @@ var (
 	HelpStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("241")).
 			Italic(true)
+
+	// WarningLowStyle for low-risk operations (network, downloads, scans)
+	WarningLowStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("220")).
+			Italic(true)
+
+	// WarningHighStyle for high-risk operations (destructive, data loss)
+	WarningHighStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("196")).
+				Bold(true)
 )

@@ -51,7 +51,8 @@ func TestGeneratorGenerate(t *testing.T) {
 				Err:      tt.mockErr,
 			}
 
-			gen := NewGenerator(mock)
+			// Pass nil anthropic client for tests - safety evaluation will be skipped
+			gen := NewGenerator(mock, nil, "test-model")
 			options, err := gen.Generate(context.Background(), tt.query)
 
 			if (err != nil) != tt.wantErr {

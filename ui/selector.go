@@ -5,7 +5,9 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/pixielabs/1lm/commands"
+	"github.com/pixielabs/1lm/safety"
 	"golang.org/x/term"
 )
 
@@ -104,10 +106,20 @@ func (m SelectorModel) View() string {
 
 		// Wrap command and description to terminal width
 		command := CommandStyle.Width(contentWidth).Render(option.Command)
+
+		// Add risk warning if present
+		var riskWarning string
+		if option.Risk != nil {
+			riskWarning = formatRiskWarning(option.Risk, m.cursor == i)
+		}
+
 		description := DescriptionStyle.Width(contentWidth).Render(option.Description)
 
 		b.WriteString(fmt.Sprintf("%s %s\n", cursor, title))
 		b.WriteString(fmt.Sprintf("  %s\n", command))
+		if riskWarning != "" {
+			b.WriteString(fmt.Sprintf("  %s\n", riskWarning))
+		}
 		b.WriteString(fmt.Sprintf("  %s\n\n", description))
 	}
 
@@ -115,6 +127,36 @@ func (m SelectorModel) View() string {
 	b.WriteString("\n")
 
 	return b.String()
+}
+
+// formatRiskWarning formats a risk warning with appropriate styling.
+//
+// risk     - The risk information
+// selected - Whether this option is currently selected
+//
+// Returns a styled warning string.
+func formatRiskWarning(risk *safety.RiskInfo, selected bool) string {
+	var icon string
+	var style lipgloss.Style
+
+	switch risk.Level {
+	case safety.RiskLow:
+		icon = "⚠️"
+		style = WarningLowStyle
+	case safety.RiskHigh:
+		icon = "🚨"
+		style = WarningHighStyle
+	default:
+		return ""
+	}
+
+	message := fmt.Sprintf("%s %s", icon, risk.Message)
+
+	if selected {
+		style = style.Bold(true)
+	}
+
+	return style.Render(message)
 }
 
 // Selected returns the selected option, if any.
