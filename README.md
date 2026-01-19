@@ -31,7 +31,8 @@ Select a command:
 - **Safety warnings**: LLM-powered risk evaluation with visual indicators
   - 🚨 High risk warnings for destructive operations (rm -rf, dd, etc.)
   - ⚠️ Low risk warnings for network operations, scans, and privilege changes
-- **Clipboard ready**: Selected command automatically copied via `pbcopy`
+- **Shell integration**: Commands appear in your prompt ready to execute (bash, zsh, fish)
+- **Cross-platform clipboard**: Falls back to clipboard copy (macOS, Linux X11/Wayland)
 - **Context-aware**: Descriptions explain what each command does and any caveats
 - **Reliable**: Uses Anthropic's structured outputs API for guaranteed valid responses
 - **Real-time progress**: See "Generating options..." and "Evaluating safety..." as it works
@@ -41,8 +42,8 @@ Select a command:
 ### Prerequisites
 
 - Go 1.25 or later
-- macOS (for clipboard support via `pbcopy`) - Linux builds available but clipboard doesn't work yet
 - [Anthropic API key](https://console.anthropic.com/)
+- (Optional) Clipboard tools: `pbcopy` (macOS), `xclip` (Linux X11), or `wl-copy` (Linux Wayland)
 
 ### Build from source
 
@@ -56,6 +57,88 @@ Optionally, move the binary to your PATH:
 
 ```bash
 sudo mv 1lm /usr/local/bin/
+```
+
+## Shell Integration
+
+For the best experience, add a shell function to your config file so selected commands appear in your prompt ready to execute.
+
+**Important**: Replace `/path/to/1lm` with the actual path to your 1lm binary. You can find it with:
+```bash
+which 1lm
+```
+
+### Bash (~/.bashrc)
+
+```bash
+1lm() {
+    local output
+    output=$(/path/to/1lm "$@" --output=shell-function)
+
+    if [[ -n "$output" ]]; then
+        READLINE_LINE="$output"
+        READLINE_POINT=${#output}
+    fi
+}
+```
+
+### Zsh (~/.zshrc)
+
+```bash
+1lm() {
+    local output
+    output=$(/path/to/1lm "$@" --output=shell-function)
+
+    if [[ -n "$output" ]]; then
+        print -z "$output"
+    fi
+}
+```
+
+### Fish (~/.config/fish/config.fish)
+
+```fish
+function 1lm
+    set -l output (/path/to/1lm $argv --output=shell-function)
+
+    if test -n "$output"
+        commandline -r "$output"
+    end
+end
+```
+
+After adding the shell function, reload your shell config:
+
+```bash
+# Bash/Zsh
+source ~/.bashrc  # or ~/.zshrc
+
+# Fish
+source ~/.config/fish/config.fish
+```
+
+### Without Shell Integration
+
+If you don't add the shell function, 1lm will copy to clipboard by default. This works on:
+- **macOS**: via `pbcopy`
+- **Linux (X11)**: via `xclip` (install with `apt install xclip` or `yum install xclip`)
+- **Linux (Wayland)**: via `wl-copy` (install with `apt install wl-clipboard`)
+
+If clipboard tools aren't available, commands will be printed to stdout.
+
+### Output Modes
+
+You can control how 1lm outputs commands:
+
+```bash
+# Shell function mode (for shell integration)
+1lm "find large files" --output=shell-function
+
+# Clipboard mode (default)
+1lm "find large files" --output=clipboard
+
+# Stdout only
+1lm "find large files" --output=stdout
 ```
 
 ## Configuration
@@ -190,15 +273,18 @@ See [PLAN.md](PLAN.md) for detailed architecture decisions and roadmap.
 - ✓ LLM-based safety warnings with visual indicators
 - ✓ Multi-stage progress indicator
 
+### v0.3.0 (Complete ✓)
+- ✓ Shell integration (command insertion into prompt)
+- ✓ Cross-platform clipboard support (macOS, Linux X11/Wayland)
+- ✓ Multiple output modes (shell-function, clipboard, stdout)
+
 ### Fast follows
-- Shell integration (command insertion vs clipboard)
 - Context awareness (cwd, OS, installed tools)
 
 ### Future
 - Multiple LLM provider support
 - Response caching
 - Command history
-- Cross-platform clipboard support
 
 ## Why?
 

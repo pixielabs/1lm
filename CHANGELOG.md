@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-01-19
+
+### Added
+- Shell integration for bash, zsh, and fish shells
+- Selected commands now appear directly in shell prompt ready to execute or edit
+- Multiple output modes via `--output` flag:
+  - `shell-function`: Outputs command for shell function to inject into prompt
+  - `clipboard`: Copies to system clipboard (default)
+  - `stdout`: Prints command to terminal
+- Cross-platform clipboard support:
+  - macOS via `pbcopy`
+  - Linux X11 via `xclip`
+  - Linux Wayland via `wl-copy`
+- Automatic fallback to stdout when clipboard tools unavailable
+- Shell function examples for all supported shells in README
+
+### Technical
+- New `output` package with handler abstraction for different output modes
+- Uses `/dev/tty` for TUI rendering when stdout is captured by shell functions
+- Manual color profile detection from TTY to preserve styling in shell-function mode
+- Comprehensive test coverage for output handlers
+- Flag parsing infrastructure for command-line options
+
+### Changed
+- Removed hardcoded pbcopy-only clipboard implementation
+- Updated Prerequisites in README to reflect cross-platform support
+
+### Fixed
+- Color and styling now work correctly in shell-function mode
+
 ## [0.2.0] - 2025-01-19
 
 ### Added
@@ -54,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - macOS only (clipboard requires pbcopy)
 - Requires Anthropic API key
 
-[Unreleased]: https://github.com/pixielabs/1lm/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/pixielabs/1lm/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/pixielabs/1lm/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/pixielabs/1lm/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/pixielabs/1lm/releases/tag/v0.1.0
