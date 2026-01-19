@@ -107,7 +107,14 @@ func (e *Evaluator) Evaluate(ctx context.Context, commands []string) ([]*RiskInf
 	}
 
 	// Build system message
-	systemMessage := "You are a security expert evaluating shell commands for safety risks. Respond with structured JSON output following the provided schema."
+	systemMessage := `You are a security expert evaluating shell commands for safety risks.
+
+Risk levels:
+- HIGH: Destructive operations that could cause data loss or system damage (rm -rf, dd, mkfs, formatting, permanent deletion)
+- LOW: Operations that interact with external systems or require careful attention (network operations, downloads, system scans, privilege changes)
+- NONE: Safe read-only operations (ls, grep, find, echo, cat, viewing files)
+
+Be practical and context-aware. Flag commands that users should think twice about before running.`
 
 	// Make API call with structured output using Beta API
 	message, err := e.client.Beta.Messages.New(ctx, anthropic.BetaMessageNewParams{
@@ -181,23 +188,11 @@ func (e *Evaluator) Evaluate(ctx context.Context, commands []string) ([]*RiskInf
 //
 // Returns the formatted prompt string.
 func buildPrompt(commands []string) string {
-	prompt := `You are a security expert evaluating shell commands for safety risks.
-
-For each command below, determine the risk level and provide a brief reason.
-
-Risk levels:
-- HIGH: Destructive operations that could cause data loss or system damage (rm -rf, dd, mkfs, formatting, permanent deletion)
-- LOW: Operations that interact with external systems or require careful attention (network operations, downloads, system scans, privilege changes)
-- NONE: Safe read-only operations (ls, grep, find, echo, cat, viewing files)
-
-Commands to evaluate:
-`
+	prompt := "Evaluate these commands:\n\n"
 
 	for i, cmd := range commands {
 		prompt += fmt.Sprintf("%d. %s\n", i+1, cmd)
 	}
-
-	prompt += "\nBe practical and context-aware. Flag commands that users should think twice about before running."
 
 	return prompt
 }

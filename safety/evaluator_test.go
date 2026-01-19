@@ -100,7 +100,7 @@ func TestBuildPrompt(t *testing.T) {
 		{
 			name:     "empty commands",
 			commands: []string{},
-			contains: []string{"Commands to evaluate:"},
+			contains: []string{"Evaluate these commands:"},
 		},
 	}
 
