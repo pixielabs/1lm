@@ -10,7 +10,6 @@ import (
 	"github.com/pixielabs/1lm/commands"
 )
 
-// captureOutput captures stdout during function execution.
 func captureOutput(f func()) string {
 	old := os.Stdout
 	r, w, _ := os.Pipe()

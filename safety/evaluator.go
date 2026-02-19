@@ -21,13 +21,13 @@ const (
 	RiskHigh
 )
 
-// RiskInfo contains details about detected risks.
+// RiskInfo contains details about a detected risk.
 type RiskInfo struct {
 	Level   RiskLevel
-	Message string // Human-readable warning
+	Message string
 }
 
-// Evaluator uses LLM to evaluate command safety.
+// Evaluator uses an LLM to evaluate command safety.
 type Evaluator struct {
 	client *anthropic.Client
 	model  string
@@ -36,21 +36,16 @@ type Evaluator struct {
 // CommandRisk represents the safety evaluation for a single command.
 type CommandRisk struct {
 	Command   string `json:"command"`
-	RiskLevel string `json:"risk_level"` // "none", "low", "high"
-	Reason    string `json:"reason"`     // Brief explanation
+	RiskLevel string `json:"risk_level"`
+	Reason    string `json:"reason"`
 }
 
-// SafetyResponse is the structured output from the LLM.
+// SafetyResponse is the structured output from the safety LLM call.
 type SafetyResponse struct {
 	Evaluations []CommandRisk `json:"evaluations"`
 }
 
-// NewEvaluator creates a new safety evaluator.
-//
-// client - The Anthropic API client
-// model  - The model to use for evaluation
-//
-// Returns a new Evaluator instance.
+// Public: Creates a new safety evaluator.
 func NewEvaluator(client *anthropic.Client, model string) *Evaluator {
 	return &Evaluator{
 		client: client,
@@ -58,12 +53,38 @@ func NewEvaluator(client *anthropic.Client, model string) *Evaluator {
 	}
 }
 
-// Evaluate evaluates multiple commands for safety risks in a single API call.
-//
-// ctx      - Context for the API call
-// commands - List of commands to evaluate
-//
-// Returns a slice of RiskInfo pointers (nil for safe commands) and any error.
+// safetySchema defines the structured output format for safety evaluation.
+var safetySchema = map[string]any{
+	"type": "object",
+	"properties": map[string]any{
+		"evaluations": map[string]any{
+			"type": "array",
+			"items": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"command": map[string]any{
+						"type": "string",
+					},
+					"risk_level": map[string]any{
+						"type": "string",
+						"enum": []string{"none", "low", "high"},
+					},
+					"reason": map[string]any{
+						"type":      "string",
+						"maxLength": 100,
+					},
+				},
+				"required":             []string{"command", "risk_level", "reason"},
+				"additionalProperties": false,
+			},
+		},
+	},
+	"required":             []string{"evaluations"},
+	"additionalProperties": false,
+}
+
+// Public: Evaluates multiple commands for safety risks in a single API call.
+// Returns a slice of RiskInfo pointers (nil elements indicate safe commands).
 func (e *Evaluator) Evaluate(ctx context.Context, commands []string) ([]*RiskInfo, error) {
 	if len(commands) == 0 {
 		return nil, nil
@@ -74,35 +95,6 @@ func (e *Evaluator) Evaluate(ctx context.Context, commands []string) ([]*RiskInf
 	}
 
 	prompt := buildPrompt(commands)
-
-	schema := map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"evaluations": map[string]any{
-				"type": "array",
-				"items": map[string]any{
-					"type": "object",
-					"properties": map[string]any{
-						"command": map[string]any{
-							"type": "string",
-						},
-						"risk_level": map[string]any{
-							"type": "string",
-							"enum": []string{"none", "low", "high"},
-						},
-						"reason": map[string]any{
-							"type":      "string",
-							"maxLength": 100,
-						},
-					},
-					"required":             []string{"command", "risk_level", "reason"},
-					"additionalProperties": false,
-				},
-			},
-		},
-		"required":             []string{"evaluations"},
-		"additionalProperties": false,
-	}
 
 	systemMessage := `You are a security expert evaluating shell commands for safety risks.
 
@@ -131,7 +123,7 @@ Be practical and context-aware. Flag commands that users should think twice abou
 			Text: systemMessage,
 		}},
 		OutputFormat: anthropic.BetaJSONOutputFormatParam{
-			Schema: schema,
+			Schema: safetySchema,
 		},
 	})
 
@@ -157,7 +149,6 @@ Be practical and context-aware. Flag commands that users should think twice abou
 		return nil, fmt.Errorf("expected %d evaluations, got %d", len(commands), len(response.Evaluations))
 	}
 
-	// Convert to RiskInfo (nil elements indicate no risk)
 	results := make([]*RiskInfo, len(commands))
 	for i, eval := range response.Evaluations {
 		if level := parseRiskLevel(eval.RiskLevel); level != RiskNone {
@@ -171,11 +162,7 @@ Be practical and context-aware. Flag commands that users should think twice abou
 	return results, nil
 }
 
-// buildPrompt builds the evaluation prompt for the LLM.
-//
-// commands - List of commands to evaluate
-//
-// Returns the formatted prompt string.
+// buildPrompt formats the list of commands into an evaluation prompt.
 func buildPrompt(commands []string) string {
 	var b strings.Builder
 	b.WriteString("Evaluate these commands:\n\n")
@@ -187,11 +174,7 @@ func buildPrompt(commands []string) string {
 	return b.String()
 }
 
-// parseRiskLevel converts a string risk level to RiskLevel enum.
-//
-// level - String risk level from API
-//
-// Returns the corresponding RiskLevel.
+// parseRiskLevel converts a string risk level to a RiskLevel enum value.
 func parseRiskLevel(level string) RiskLevel {
 	switch level {
 	case "low":
@@ -203,9 +186,7 @@ func parseRiskLevel(level string) RiskLevel {
 	}
 }
 
-// String returns the string representation of a RiskLevel.
-//
-// Returns "None", "Low", or "High".
+// String returns the human-readable name of a RiskLevel.
 func (r RiskLevel) String() string {
 	switch r {
 	case RiskLow:

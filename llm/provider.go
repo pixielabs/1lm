@@ -9,25 +9,44 @@ import (
 	"github.com/anthropics/anthropic-sdk-go/option"
 )
 
-// AnthropicClient implements Client for Anthropic's Claude models.
+// AnthropicClient implements Client using Anthropic's Claude models.
 type AnthropicClient struct {
 	client anthropic.Client
 	model  anthropic.Model
 }
 
-// NewAnthropicClient creates a new Anthropic client.
-//
-// apiKey - The Anthropic API key
-// model  - The Claude model to use
-//
-// Returns an initialized Client and any error encountered.
-//
-// Examples
-//
-//   client, err := llm.NewAnthropicClient("sk-ant-...", "claude-sonnet-4-5-20250929")
-//   if err != nil {
-//       log.Fatal(err)
-//   }
+// optionsSchema defines the structured output format for command generation.
+var optionsSchema = map[string]any{
+	"type": "object",
+	"properties": map[string]any{
+		"options": map[string]any{
+			"type": "array",
+			"items": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"title": map[string]any{
+						"type":        "string",
+						"description": "Brief title for this command option (2-5 words)",
+					},
+					"command": map[string]any{
+						"type":        "string",
+						"description": "The actual shell command to execute",
+					},
+					"description": map[string]any{
+						"type":        "string",
+						"description": "Clear explanation of what this command does and any important details",
+					},
+				},
+				"required":             []string{"title", "command", "description"},
+				"additionalProperties": false,
+			},
+		},
+	},
+	"required":             []string{"options"},
+	"additionalProperties": false,
+}
+
+// Public: Creates a new Anthropic client for command generation.
 func NewAnthropicClient(apiKey, model string) (Client, error) {
 	return &AnthropicClient{
 		client: anthropic.NewClient(option.WithAPIKey(apiKey)),
@@ -35,43 +54,9 @@ func NewAnthropicClient(apiKey, model string) (Client, error) {
 	}, nil
 }
 
-// GenerateOptions generates command options from a natural language query.
-//
-// ctx   - The context for the request
-// query - The natural language description of desired command
-//
-// Returns a slice of CommandOptions and any error encountered.
+// Public: Generates command options from a natural language query using
+// Anthropic's structured outputs API.
 func (c *AnthropicClient) GenerateOptions(ctx context.Context, query string) ([]CommandOption, error) {
-	schema := map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"options": map[string]any{
-				"type": "array",
-				"items": map[string]any{
-					"type": "object",
-					"properties": map[string]any{
-						"title": map[string]any{
-							"type":        "string",
-							"description": "Brief title for this command option (2-5 words)",
-						},
-						"command": map[string]any{
-							"type":        "string",
-							"description": "The actual shell command to execute",
-						},
-						"description": map[string]any{
-							"type":        "string",
-							"description": "Clear explanation of what this command does and any important details",
-						},
-					},
-					"required":             []string{"title", "command", "description"},
-					"additionalProperties": false,
-				},
-			},
-		},
-		"required":             []string{"options"},
-		"additionalProperties": false,
-	}
-
 	promptText := fmt.Sprintf(`Given this user request: "%s"
 
 Generate exactly 3 different shell command options that accomplish the task.
@@ -98,7 +83,7 @@ Requirements:
 			Role: anthropic.BetaMessageParamRoleUser,
 		}},
 		OutputFormat: anthropic.BetaJSONOutputFormatParam{
-			Schema: schema,
+			Schema: optionsSchema,
 		},
 	})
 

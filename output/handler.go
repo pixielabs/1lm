@@ -26,20 +26,12 @@ type Handler struct {
 	mode Mode
 }
 
-// NewHandler creates a new output handler.
-//
-// mode - The output mode to use
-//
-// Returns an initialized Handler.
+// Public: Creates a new output handler for the given mode.
 func NewHandler(mode Mode) *Handler {
 	return &Handler{mode: mode}
 }
 
-// Output handles the selected command based on output mode.
-//
-// cmd - The selected command option
-//
-// Returns any error encountered.
+// Public: Outputs the selected command using the configured mode.
 func (h *Handler) Output(cmd *commands.Option) error {
 	switch h.mode {
 	case ModeShellFunction:
@@ -51,32 +43,28 @@ func (h *Handler) Output(cmd *commands.Option) error {
 	}
 }
 
-// outputShellFunction outputs for shell function consumption.
 func (h *Handler) outputShellFunction(cmd *commands.Option) error {
 	fmt.Println(cmd.Command)
 	return nil
 }
 
-// outputStdout prints to stdout with confirmation.
 func (h *Handler) outputStdout(cmd *commands.Option) error {
 	fmt.Printf("\n✓ Selected command:\n%s\n", cmd.Command)
 	return nil
 }
 
-// clipboardCmd describes one clipboard tool and how to invoke it.
 type clipboardCmd struct {
 	name string
 	args []string
 }
 
-// clipboardTools lists the clipboard tools to try, in order of preference.
+// clipboardTools lists clipboard tools in order of preference by platform.
 var clipboardTools = []clipboardCmd{
 	{name: "pbcopy"},                                    // macOS
 	{name: "xclip", args: []string{"-selection", "clipboard"}}, // Linux X11
 	{name: "wl-copy"},                                   // Wayland
 }
 
-// outputClipboard copies to system clipboard (current behavior).
 func (h *Handler) outputClipboard(cmd *commands.Option) error {
 	for _, tool := range clipboardTools {
 		c := exec.Command(tool.name, tool.args...)

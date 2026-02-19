@@ -8,7 +8,7 @@ import (
 	"github.com/pixielabs/1lm/commands"
 )
 
-// InputModel represents the text input prompt for queries.
+// InputModel is the initial prompt where users type their query.
 type InputModel struct {
 	textInput textinput.Model
 	generator *commands.Generator
@@ -16,11 +16,7 @@ type InputModel struct {
 	query     string
 }
 
-// NewInputModel creates a new input model.
-//
-// generator - The command generator to use
-//
-// Returns an initialized InputModel.
+// NewInputModel creates a text input prompt for entering queries.
 func NewInputModel(generator *commands.Generator) InputModel {
 	ti := textinput.New()
 	ti.Placeholder = "e.g., search git history for myFunction"
@@ -34,16 +30,12 @@ func NewInputModel(generator *commands.Generator) InputModel {
 	}
 }
 
-// Init initializes the model.
+// Init starts the cursor blinking.
 func (m InputModel) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-// Update handles messages and updates the model.
-//
-// msg - The message to process
-//
-// Returns the updated model and any command to run.
+// Update transitions to LoadingModel on Enter, or quits on Esc/Ctrl+C.
 func (m InputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
@@ -71,9 +63,7 @@ func (m InputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-// View renders the input UI.
-//
-// Returns the rendered string.
+// View renders the query prompt with help text.
 func (m InputModel) View() string {
 	if m.submitted {
 		return ""

@@ -9,7 +9,7 @@ import (
 	"github.com/pixielabs/1lm/commands"
 )
 
-// LoadingModel represents the loading state with a spinner.
+// LoadingModel shows a spinner while generating command options.
 type LoadingModel struct {
 	spinner   spinner.Model
 	generator *commands.Generator
@@ -17,18 +17,13 @@ type LoadingModel struct {
 	err       error
 }
 
-// optionsMsg is sent when options are loaded.
+// optionsMsg is sent when the generation API call completes.
 type optionsMsg struct {
 	options []commands.Option
 	err     error
 }
 
-// NewLoadingModel creates a new loading model.
-//
-// generator - The command generator to use
-// query     - The user's query
-//
-// Returns an initialized LoadingModel.
+// NewLoadingModel creates a loading model that generates options for the query.
 func NewLoadingModel(generator *commands.Generator, query string) LoadingModel {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
@@ -41,22 +36,17 @@ func NewLoadingModel(generator *commands.Generator, query string) LoadingModel {
 	}
 }
 
-// Init initializes the model and starts the spinner + API call.
+// Init starts the spinner and kicks off the API call.
 func (m LoadingModel) Init() tea.Cmd {
 	return tea.Batch(m.spinner.Tick, m.loadOptions)
 }
 
-// loadOptions performs the generation API call asynchronously.
 func (m LoadingModel) loadOptions() tea.Msg {
 	options, err := m.generator.Generate(context.Background(), m.query)
 	return optionsMsg{options: options, err: err}
 }
 
-// Update handles messages and updates the model.
-//
-// msg - The message to process
-//
-// Returns the updated model and any command to run.
+// Update handles spinner ticks, API responses, and quit keys.
 func (m LoadingModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -88,9 +78,7 @@ func (m LoadingModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// View renders the loading UI.
-//
-// Returns the rendered string.
+// View renders the spinner with a "Generating options..." message.
 func (m LoadingModel) View() string {
 	if m.err != nil {
 		return ""
@@ -100,8 +88,6 @@ func (m LoadingModel) View() string {
 }
 
 // Err returns any error encountered during loading.
-//
-// Returns the error or nil.
 func (m LoadingModel) Err() error {
 	return m.err
 }

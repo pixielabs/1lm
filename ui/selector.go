@@ -19,7 +19,7 @@ type riskResultMsg struct {
 	err     error
 }
 
-// SelectorModel represents the bubbletea model for option selection.
+// SelectorModel lets the user pick from generated command options.
 type SelectorModel struct {
 	options    []commands.Option
 	cursor     int
@@ -31,12 +31,7 @@ type SelectorModel struct {
 	spinner    spinner.Model
 }
 
-// NewSelector creates a new option selector.
-//
-// options   - The command options to choose from
-// generator - The generator used to run background safety evaluation
-//
-// Returns an initialized SelectorModel.
+// NewSelector creates a new option selector with background safety evaluation.
 func NewSelector(options []commands.Option, generator *commands.Generator) SelectorModel {
 	width := 80
 	if w, _, err := term.GetSize(0); err == nil && w > 0 {
@@ -55,22 +50,17 @@ func NewSelector(options []commands.Option, generator *commands.Generator) Selec
 	}
 }
 
-// Init fires the background safety evaluation and starts the spinner.
+// Init starts background safety evaluation and the spinner animation.
 func (m SelectorModel) Init() tea.Cmd {
 	return tea.Batch(m.evaluateSafety, m.spinner.Tick)
 }
 
-// evaluateSafety runs safety evaluation and returns a riskResultMsg.
 func (m SelectorModel) evaluateSafety() tea.Msg {
 	options, err := m.generator.EvaluateSafety(context.Background(), m.options)
 	return riskResultMsg{options: options, err: err}
 }
 
-// Update handles messages and updates the model. Required by bubbletea.
-//
-// msg - The message to process
-//
-// Returns the updated model and any command to run.
+// Update handles key presses, safety results, and spinner ticks.
 func (m SelectorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -113,9 +103,7 @@ func (m SelectorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// View renders the UI. Required by bubbletea.
-//
-// Returns the rendered string.
+// View renders the option list with safety indicators.
 func (m SelectorModel) View() string {
 	if m.quitting && m.selected == nil {
 		return ""
@@ -165,23 +153,16 @@ func (m SelectorModel) View() string {
 	return b.String()
 }
 
-// formatRiskWarning formats a risk warning with appropriate styling.
-//
-// risk     - The risk information
-// selected - Whether this option is currently selected
-//
-// Returns a styled warning string.
+// formatRiskWarning returns a styled warning string for the given risk level.
 func formatRiskWarning(risk *safety.RiskInfo, selected bool) string {
 	var icon string
 	var style lipgloss.Style
 
 	switch risk.Level {
 	case safety.RiskLow:
-		icon = "⚠️"
-		style = WarningLowStyle
+		icon, style = "⚠️", WarningLowStyle
 	case safety.RiskHigh:
-		icon = "🚨"
-		style = WarningHighStyle
+		icon, style = "🚨", WarningHighStyle
 	default:
 		return ""
 	}
@@ -193,9 +174,7 @@ func formatRiskWarning(risk *safety.RiskInfo, selected bool) string {
 	return style.Render(fmt.Sprintf("%s %s", icon, risk.Message))
 }
 
-// Selected returns the selected option, if any.
-//
-// Returns a pointer to the selected Option, or nil if none selected.
+// Selected returns the chosen option, or nil if the user quit.
 func (m SelectorModel) Selected() *commands.Option {
 	return m.selected
 }

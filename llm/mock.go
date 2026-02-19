@@ -2,32 +2,20 @@ package llm
 
 import "context"
 
-// MockClient is a mock LLM client for testing.
+// MockClient is a test double for the Client interface.
 type MockClient struct {
-	// Response to return from GenerateOptions
-	Response []CommandOption
-
-	// Error to return from GenerateOptions
-	Err error
-
-	// Captures the last query passed to GenerateOptions
+	Response  []CommandOption
+	Err       error
 	LastQuery string
 }
 
-// GenerateOptions returns the configured response or error.
-//
-// ctx   - The context for the request
-// query - The natural language description
-//
-// Returns the configured response and error.
-func (m *MockClient) GenerateOptions(ctx context.Context, query string) ([]CommandOption, error) {
+// GenerateOptions returns the pre-configured response and captures the query.
+func (m *MockClient) GenerateOptions(_ context.Context, query string) ([]CommandOption, error) {
 	m.LastQuery = query
 	return m.Response, m.Err
 }
 
-// NewMockClient creates a new mock client with default successful response.
-//
-// Returns a MockClient configured with sample options.
+// NewMockClient creates a MockClient with three sample options.
 func NewMockClient() *MockClient {
 	return &MockClient{
 		Response: []CommandOption{

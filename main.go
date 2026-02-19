@@ -29,10 +29,9 @@ func main() {
 }
 
 func run() error {
-	// Parse command-line flags, supporting flags anywhere in the arg list.
-	// Go's flag package stops at the first non-flag argument, so
-	// "1lm my query --output=shell-function" would leave --output unparsed.
-	// Re-order args to put flags first so they're always processed.
+	// Re-order args so flags come first. Go's flag package stops at the
+	// first non-flag argument, so "1lm my query --output=shell-function"
+	// would leave --output unparsed without this.
 	var flagArgs, queryArgs []string
 	for _, arg := range os.Args[1:] {
 		if strings.HasPrefix(arg, "-") {
@@ -41,7 +40,9 @@ func run() error {
 			queryArgs = append(queryArgs, arg)
 		}
 	}
-	os.Args = append(append([]string{os.Args[0]}, flagArgs...), queryArgs...)
+	os.Args = append(
+		append([]string{os.Args[0]}, flagArgs...), queryArgs...,
+	)
 	flag.Parse()
 
 	cfg, err := config.Load()
@@ -58,7 +59,7 @@ func run() error {
 		return fmt.Errorf("failed to create LLM client: %w", err)
 	}
 
-	// Separate Anthropic client needed for safety evaluation (different API surface)
+	// Safety evaluation uses the raw Anthropic client (different API surface)
 	anthropicClient := anthropic.NewClient(
 		option.WithAPIKey(cfg.AnthropicAPIKey),
 	)
@@ -73,7 +74,7 @@ func run() error {
 		initialModel = ui.NewInputModel(generator)
 	}
 
-	// In shell-function mode, use /dev/tty so stdout stays clean for command output
+	// In shell-function mode, use /dev/tty so stdout stays clean for output
 	var p *tea.Program
 	if *outputMode == "shell-function" {
 		tty, err := os.OpenFile("/dev/tty", os.O_RDWR, 0)

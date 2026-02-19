@@ -15,13 +15,8 @@ type Generator struct {
 	evaluator *safety.Evaluator
 }
 
-// NewGenerator creates a new command Generator.
-//
-// client          - The LLM client to use for generation
-// anthropicClient - The Anthropic client for safety evaluation
-// model           - The model to use for safety evaluation
-//
-// Returns an initialized Generator.
+// Public: Creates a new Generator with the given LLM client and a safety
+// evaluator backed by the Anthropic client.
 func NewGenerator(client llm.Client, anthropicClient *anthropic.Client, model string) *Generator {
 	return &Generator{
 		client:    client,
@@ -29,12 +24,7 @@ func NewGenerator(client llm.Client, anthropicClient *anthropic.Client, model st
 	}
 }
 
-// Generate creates command options from a natural language query.
-//
-// ctx   - The context for the request
-// query - The natural language description
-//
-// Returns a slice of Options and any error encountered.
+// Public: Generates command options from a natural language query.
 func (g *Generator) Generate(ctx context.Context, query string) ([]Option, error) {
 	llmOptions, err := g.client.GenerateOptions(ctx, query)
 	if err != nil {
@@ -53,13 +43,8 @@ func (g *Generator) Generate(ctx context.Context, query string) ([]Option, error
 	return options, nil
 }
 
-// EvaluateSafety evaluates commands for safety risks and returns updated options.
-// This is best-effort: returns nil, err on failure so callers can ignore silently.
-//
-// ctx     - The context for the request
-// options - The options to evaluate
-//
-// Returns updated options with Risk fields populated, or nil and an error.
+// Public: Evaluates commands for safety risks and returns updated options.
+// Best-effort: returns (nil, err) on failure so callers can ignore silently.
 func (g *Generator) EvaluateSafety(ctx context.Context, options []Option) ([]Option, error) {
 	cmds := make([]string, len(options))
 	for i, opt := range options {
