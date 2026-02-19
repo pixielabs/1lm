@@ -81,7 +81,7 @@ func (m SelectorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 //
 // Returns the rendered string.
 func (m SelectorModel) View() string {
-	if m.quitting {
+	if m.quitting && m.selected == nil {
 		return ""
 	}
 
@@ -123,8 +123,10 @@ func (m SelectorModel) View() string {
 		b.WriteString(fmt.Sprintf("  %s\n\n", description))
 	}
 
-	b.WriteString(HelpStyle.Render("↑/k: up • ↓/j: down • enter: select • q: quit"))
-	b.WriteString("\n")
+	if m.selected == nil {
+		b.WriteString(HelpStyle.Render("↑/k: up • ↓/j: down • enter: select • q: quit"))
+		b.WriteString("\n")
+	}
 
 	return b.String()
 }
