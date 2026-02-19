@@ -43,7 +43,11 @@ func run() error {
 			queryArgs = append(queryArgs, arg)
 		}
 	}
-	os.Args = append([]string{os.Args[0]}, append(flagArgs, queryArgs...)...)
+	reordered := make([]string, 0, 1+len(flagArgs)+len(queryArgs))
+	reordered = append(reordered, os.Args[0])
+	reordered = append(reordered, flagArgs...)
+	reordered = append(reordered, queryArgs...)
+	os.Args = reordered
 	flag.Parse()
 
 	// Load configuration

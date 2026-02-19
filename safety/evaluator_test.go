@@ -2,6 +2,7 @@ package safety
 
 import (
 	"context"
+	"strings"
 	"testing"
 )
 
@@ -108,7 +109,7 @@ func TestBuildPrompt(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			prompt := buildPrompt(tt.commands)
 			for _, substr := range tt.contains {
-				if len(substr) > 0 && !contains(prompt, substr) {
+				if len(substr) > 0 && !strings.Contains(prompt, substr) {
 					t.Errorf("buildPrompt() missing expected substring %q", substr)
 				}
 			}
@@ -131,15 +132,3 @@ func TestEvaluateEmptyCommands(t *testing.T) {
 	}
 }
 
-// contains checks if a string contains a substring.
-func contains(s, substr string) bool {
-	if len(substr) == 0 {
-		return true
-	}
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
-}

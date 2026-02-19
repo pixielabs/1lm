@@ -66,48 +66,31 @@ func (h *Handler) outputStdout(cmd *commands.Option) error {
 	return nil
 }
 
+// clipboardCmd describes one clipboard tool and how to invoke it.
+type clipboardCmd struct {
+	name string
+	args []string
+}
+
+// clipboardTools lists the clipboard tools to try, in order of preference.
+var clipboardTools = []clipboardCmd{
+	{name: "pbcopy"},                                    // macOS
+	{name: "xclip", args: []string{"-selection", "clipboard"}}, // Linux X11
+	{name: "wl-copy"},                                   // Wayland
+}
+
 // outputClipboard copies to system clipboard (current behavior).
 func (h *Handler) outputClipboard(cmd *commands.Option) error {
-	// Try pbcopy (macOS)
-	if err := copyViaPbcopy(cmd.Command); err == nil {
-		fmt.Printf("\n✓ Copied to clipboard: %s\n", cmd.Command)
-		return nil
-	}
-
-	// Try xclip (Linux)
-	if err := copyViaXclip(cmd.Command); err == nil {
-		fmt.Printf("\n✓ Copied to clipboard: %s\n", cmd.Command)
-		return nil
-	}
-
-	// Try wl-copy (Wayland)
-	if err := copyViaWlCopy(cmd.Command); err == nil {
-		fmt.Printf("\n✓ Copied to clipboard: %s\n", cmd.Command)
-		return nil
+	for _, tool := range clipboardTools {
+		c := exec.Command(tool.name, tool.args...)
+		c.Stdin = strings.NewReader(cmd.Command)
+		if c.Run() == nil {
+			fmt.Printf("\n✓ Copied to clipboard: %s\n", cmd.Command)
+			return nil
+		}
 	}
 
 	// Fallback: print to stdout
 	fmt.Printf("\n⚠ Clipboard not available\n")
 	return h.outputStdout(cmd)
-}
-
-// copyViaPbcopy uses macOS pbcopy.
-func copyViaPbcopy(text string) error {
-	cmd := exec.Command("pbcopy")
-	cmd.Stdin = strings.NewReader(text)
-	return cmd.Run()
-}
-
-// copyViaXclip uses Linux xclip.
-func copyViaXclip(text string) error {
-	cmd := exec.Command("xclip", "-selection", "clipboard")
-	cmd.Stdin = strings.NewReader(text)
-	return cmd.Run()
-}
-
-// copyViaWlCopy uses Wayland wl-copy.
-func copyViaWlCopy(text string) error {
-	cmd := exec.Command("wl-copy")
-	cmd.Stdin = strings.NewReader(text)
-	return cmd.Run()
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/anthropics/anthropic-sdk-go"
 )
@@ -188,13 +189,14 @@ Be practical and context-aware. Flag commands that users should think twice abou
 //
 // Returns the formatted prompt string.
 func buildPrompt(commands []string) string {
-	prompt := "Evaluate these commands:\n\n"
+	var b strings.Builder
+	b.WriteString("Evaluate these commands:\n\n")
 
 	for i, cmd := range commands {
-		prompt += fmt.Sprintf("%d. %s\n", i+1, cmd)
+		fmt.Fprintf(&b, "%d. %s\n", i+1, cmd)
 	}
 
-	return prompt
+	return b.String()
 }
 
 // parseRiskLevel converts a string risk level to RiskLevel enum.
