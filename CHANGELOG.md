@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-02-19
+
+### Changed
+- Safety evaluation now runs concurrently while the command selector is
+  visible, eliminating the sequential "Evaluating safety..." wait
+- Each option shows an animated spinner placeholder while the check runs,
+  replaced by risk warnings (or nothing) once evaluation completes
+
 ## [0.4.0] - 2026-02-19
 
 ### Added
@@ -96,7 +104,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - macOS only (clipboard requires pbcopy)
 - Requires Anthropic API key
 
-[Unreleased]: https://github.com/pixielabs/1lm/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/pixielabs/1lm/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/pixielabs/1lm/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/pixielabs/1lm/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/pixielabs/1lm/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/pixielabs/1lm/compare/v0.1.0...v0.2.0
