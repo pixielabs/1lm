@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-02-19
+
+### Added
+- Selector output is now preserved on screen after selecting a command, so
+  alternatives remain visible for reference
+
+### Fixed
+- Shell function mode now works correctly when query is passed as arguments
+  (e.g. `1lm list files`) — flags like `--output=shell-function` were
+  previously ignored when placed after positional args, causing TUI output
+  to be captured by the shell and corrupt the prompt
+
 ## [0.3.0] - 2026-01-19
 
 ### Added
@@ -84,7 +96,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - macOS only (clipboard requires pbcopy)
 - Requires Anthropic API key
 
-[Unreleased]: https://github.com/pixielabs/1lm/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/pixielabs/1lm/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/pixielabs/1lm/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/pixielabs/1lm/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/pixielabs/1lm/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/pixielabs/1lm/releases/tag/v0.1.0
