@@ -74,7 +74,6 @@ func TestShellFunctionOutput(t *testing.T) {
 		}
 	})
 
-	// Should output only the command (no formatting)
 	expected := "ls -la\n"
 	if output != expected {
 		t.Errorf("Output() = %q, want %q", output, expected)
@@ -96,7 +95,6 @@ func TestStdoutOutput(t *testing.T) {
 		}
 	})
 
-	// Should output formatted message with checkmark
 	if !strings.Contains(output, "✓ Selected command:") {
 		t.Errorf("Output() missing '✓ Selected command:', got %q", output)
 	}
@@ -106,8 +104,6 @@ func TestStdoutOutput(t *testing.T) {
 }
 
 func TestClipboardFallback(t *testing.T) {
-	// This test verifies the clipboard fallback logic
-	// In a real environment, clipboard commands might not be available
 	handler := NewHandler(ModeClipboard)
 	cmd := &commands.Option{
 		Title:       "List files",
@@ -115,16 +111,11 @@ func TestClipboardFallback(t *testing.T) {
 		Description: "List all files",
 	}
 
-	// Just ensure it doesn't panic and returns without error
-	// The actual clipboard functionality is tested manually
-	// since it depends on system tools (pbcopy, xclip, wl-copy)
 	output := captureOutput(func() {
-		err := handler.Output(cmd)
 		// Error is acceptable if clipboard tools are missing
-		_ = err
+		_ = handler.Output(cmd)
 	})
 
-	// Should contain either clipboard success or fallback message
 	hasSuccess := strings.Contains(output, "✓ Copied to clipboard:")
 	hasFallback := strings.Contains(output, "⚠ Clipboard not available")
 	hasCommand := strings.Contains(output, "ls -la")
@@ -191,7 +182,6 @@ func TestOutputShellFunction(t *testing.T) {
 		}
 	})
 
-	// Should output exactly the command with newline
 	expected := "git status\n"
 	if output != expected {
 		t.Errorf("outputShellFunction() = %q, want %q", output, expected)
@@ -211,7 +201,6 @@ func TestOutputStdoutFormatting(t *testing.T) {
 		}
 	})
 
-	// Check for proper formatting
 	if !strings.HasPrefix(output, "\n✓") {
 		t.Errorf("outputStdout() should start with newline and checkmark, got %q", output)
 	}
@@ -227,13 +216,10 @@ func TestDefaultModeIsClipboard(t *testing.T) {
 	}
 
 	output := captureOutput(func() {
-		err := handler.Output(cmd)
-		// Ignore error as clipboard tools may not be available
-		_ = err
+		// Error is acceptable if clipboard tools are missing
+		_ = handler.Output(cmd)
 	})
 
-	// Should fallback to clipboard behavior
-	// (which itself will fallback to stdout if clipboard unavailable)
 	if !strings.Contains(output, "echo test") {
 		t.Errorf("Output() with invalid mode missing command, got %q", output)
 	}

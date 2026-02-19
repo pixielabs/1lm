@@ -13,6 +13,12 @@ import (
 	"golang.org/x/term"
 )
 
+// riskResultMsg is sent when background safety evaluation completes.
+type riskResultMsg struct {
+	options []commands.Option
+	err     error
+}
+
 // SelectorModel represents the bubbletea model for option selection.
 type SelectorModel struct {
 	options    []commands.Option
@@ -32,7 +38,6 @@ type SelectorModel struct {
 //
 // Returns an initialized SelectorModel.
 func NewSelector(options []commands.Option, generator *commands.Generator) SelectorModel {
-	// Get terminal width, default to 80 if unable to detect
 	width := 80
 	if w, _, err := term.GetSize(0); err == nil && w > 0 {
 		width = w
@@ -44,7 +49,6 @@ func NewSelector(options []commands.Option, generator *commands.Generator) Selec
 
 	return SelectorModel{
 		options:   options,
-		cursor:    0,
 		width:     width,
 		generator: generator,
 		spinner:   s,
@@ -122,27 +126,23 @@ func (m SelectorModel) View() string {
 	b.WriteString("\n")
 	b.WriteString("Select a command:\n\n")
 
-	// Reserve space for cursor and indentation
 	contentWidth := m.width - 4
 
 	for i, option := range m.options {
-		cursor := " "
-		if m.cursor == i {
-			cursor = SelectedStyle.Render("▸")
-		}
+		isSelected := m.cursor == i
 
+		cursor := " "
 		title := TitleStyle.Render(option.Title)
-		if m.cursor == i {
+		if isSelected {
+			cursor = SelectedStyle.Render("▸")
 			title = SelectedStyle.Render(option.Title)
 		}
 
-		// Wrap command and description to terminal width
 		command := CommandStyle.Width(contentWidth).Render(option.Command)
 
-		// Add risk warning if present, or animated placeholder while checking
 		var riskWarning string
 		if option.Risk != nil {
-			riskWarning = formatRiskWarning(option.Risk, m.cursor == i)
+			riskWarning = formatRiskWarning(option.Risk, isSelected)
 		} else if !m.safetyDone {
 			riskWarning = m.spinner.View() + CheckingStyle.Render(" checking safety...")
 		}
@@ -186,13 +186,11 @@ func formatRiskWarning(risk *safety.RiskInfo, selected bool) string {
 		return ""
 	}
 
-	message := fmt.Sprintf("%s %s", icon, risk.Message)
-
 	if selected {
 		style = style.Bold(true)
 	}
 
-	return style.Render(message)
+	return style.Render(fmt.Sprintf("%s %s", icon, risk.Message))
 }
 
 // Selected returns the selected option, if any.

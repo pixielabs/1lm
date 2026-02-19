@@ -51,7 +51,6 @@ func TestGeneratorGenerate(t *testing.T) {
 				Err:      tt.mockErr,
 			}
 
-			// Pass nil anthropic client for tests - safety evaluation will be skipped
 			gen := NewGenerator(mock, nil, "test-model")
 			options, err := gen.Generate(context.Background(), tt.query)
 
@@ -64,12 +63,10 @@ func TestGeneratorGenerate(t *testing.T) {
 				t.Errorf("Generate() got %d options, want %d", len(options), tt.wantCount)
 			}
 
-			// Verify query was passed to mock
 			if mock.LastQuery != tt.query {
 				t.Errorf("Generate() passed query %q, want %q", mock.LastQuery, tt.query)
 			}
 
-			// Verify conversion from llm.CommandOption to commands.Option
 			if !tt.wantErr && len(tt.mockOptions) > 0 {
 				if options[0].Title != tt.mockOptions[0].Title {
 					t.Errorf("Generate() option title = %q, want %q", options[0].Title, tt.mockOptions[0].Title)

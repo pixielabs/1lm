@@ -46,8 +46,6 @@ func (h *Handler) Output(cmd *commands.Option) error {
 		return h.outputShellFunction(cmd)
 	case ModeStdout:
 		return h.outputStdout(cmd)
-	case ModeClipboard:
-		fallthrough
 	default:
 		return h.outputClipboard(cmd)
 	}
@@ -55,7 +53,6 @@ func (h *Handler) Output(cmd *commands.Option) error {
 
 // outputShellFunction outputs for shell function consumption.
 func (h *Handler) outputShellFunction(cmd *commands.Option) error {
-	// Print command to stdout (shell wrapper will read it)
 	fmt.Println(cmd.Command)
 	return nil
 }
@@ -90,7 +87,6 @@ func (h *Handler) outputClipboard(cmd *commands.Option) error {
 		}
 	}
 
-	// Fallback: print to stdout
 	fmt.Printf("\n⚠ Clipboard not available\n")
 	return h.outputStdout(cmd)
 }

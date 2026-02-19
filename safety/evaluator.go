@@ -69,15 +69,12 @@ func (e *Evaluator) Evaluate(ctx context.Context, commands []string) ([]*RiskInf
 		return nil, nil
 	}
 
-	// Return error if client is nil (e.g., in tests)
 	if e.client == nil {
 		return nil, fmt.Errorf("evaluator client is nil")
 	}
 
-	// Build the prompt
 	prompt := buildPrompt(commands)
 
-	// Define JSON schema for structured output
 	schema := map[string]any{
 		"type": "object",
 		"properties": map[string]any{
@@ -107,7 +104,6 @@ func (e *Evaluator) Evaluate(ctx context.Context, commands []string) ([]*RiskInf
 		"additionalProperties": false,
 	}
 
-	// Build system message
 	systemMessage := `You are a security expert evaluating shell commands for safety risks.
 
 Risk levels:
@@ -117,7 +113,6 @@ Risk levels:
 
 Be practical and context-aware. Flag commands that users should think twice about before running.`
 
-	// Make API call with structured output using Beta API
 	message, err := e.client.Beta.Messages.New(ctx, anthropic.BetaMessageNewParams{
 		Model:     anthropic.Model(e.model),
 		MaxTokens: 1024,
@@ -144,7 +139,6 @@ Be practical and context-aware. Flag commands that users should think twice abou
 		return nil, fmt.Errorf("API call failed: %w", err)
 	}
 
-	// Extract text from response
 	if len(message.Content) == 0 {
 		return nil, fmt.Errorf("empty response from API")
 	}
@@ -154,29 +148,23 @@ Be practical and context-aware. Flag commands that users should think twice abou
 		return nil, fmt.Errorf("no text content in response")
 	}
 
-	// Parse JSON response
 	var response SafetyResponse
 	if err := json.Unmarshal([]byte(textContent), &response); err != nil {
 		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
 
-	// Validate we got the right number of evaluations
 	if len(response.Evaluations) != len(commands) {
 		return nil, fmt.Errorf("expected %d evaluations, got %d", len(commands), len(response.Evaluations))
 	}
 
-	// Convert to RiskInfo
+	// Convert to RiskInfo (nil elements indicate no risk)
 	results := make([]*RiskInfo, len(commands))
 	for i, eval := range response.Evaluations {
-		level := parseRiskLevel(eval.RiskLevel)
-		if level == RiskNone {
-			results[i] = nil
-			continue
-		}
-
-		results[i] = &RiskInfo{
-			Level:   level,
-			Message: eval.Reason,
+		if level := parseRiskLevel(eval.RiskLevel); level != RiskNone {
+			results[i] = &RiskInfo{
+				Level:   level,
+				Message: eval.Reason,
+			}
 		}
 	}
 

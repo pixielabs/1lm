@@ -23,12 +23,6 @@ type optionsMsg struct {
 	err     error
 }
 
-// riskResultMsg is sent when background safety evaluation completes.
-type riskResultMsg struct {
-	options []commands.Option
-	err     error
-}
-
 // NewLoadingModel creates a new loading model.
 //
 // generator - The command generator to use
@@ -66,7 +60,8 @@ func (m LoadingModel) loadOptions() tea.Msg {
 func (m LoadingModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if msg.String() == "ctrl+c" || msg.String() == "q" {
+		switch msg.String() {
+		case "ctrl+c", "q":
 			return m, tea.Quit
 		}
 

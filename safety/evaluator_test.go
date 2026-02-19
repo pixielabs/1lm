@@ -118,7 +118,6 @@ func TestBuildPrompt(t *testing.T) {
 }
 
 func TestEvaluateEmptyCommands(t *testing.T) {
-	// Test with nil client since we won't make API calls
 	evaluator := &Evaluator{client: nil, model: "test"}
 
 	results, err := evaluator.Evaluate(context.Background(), []string{})

@@ -42,7 +42,6 @@ func NewAnthropicClient(apiKey, model string) (Client, error) {
 //
 // Returns a slice of CommandOptions and any error encountered.
 func (c *AnthropicClient) GenerateOptions(ctx context.Context, query string) ([]CommandOption, error) {
-	// Define JSON schema for structured output
 	schema := map[string]any{
 		"type": "object",
 		"properties": map[string]any{
@@ -73,7 +72,6 @@ func (c *AnthropicClient) GenerateOptions(ctx context.Context, query string) ([]
 		"additionalProperties": false,
 	}
 
-	// Build prompt
 	promptText := fmt.Sprintf(`Given this user request: "%s"
 
 Generate exactly 3 different shell command options that accomplish the task.
@@ -85,7 +83,6 @@ Requirements:
 - Include relevant flags and options
 - Descriptions should explain the approach and any caveats`, query)
 
-	// Call API with structured output
 	message, err := c.client.Beta.Messages.New(ctx, anthropic.BetaMessageNewParams{
 		Model:     c.model,
 		MaxTokens: 2048,
@@ -109,18 +106,15 @@ Requirements:
 		return nil, fmt.Errorf("API call failed: %w", err)
 	}
 
-	// Extract JSON from response
 	if len(message.Content) == 0 {
 		return nil, fmt.Errorf("empty response from API")
 	}
 
-	// Get the text content - structured output comes back as text
 	textContent := message.Content[0].Text
 	if textContent == "" {
 		return nil, fmt.Errorf("no text content in response")
 	}
 
-	// Parse JSON response
 	var result struct {
 		Options []CommandOption `json:"options"`
 	}

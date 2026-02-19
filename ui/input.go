@@ -51,7 +51,6 @@ func (m InputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEnter:
-			// Submit query and transition to loading
 			m.query = m.textInput.Value()
 			if m.query != "" {
 				m.submitted = true
@@ -65,7 +64,6 @@ func (m InputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.WindowSizeMsg:
-		// Adjust input width based on terminal size
 		m.textInput.Width = msg.Width - 4
 	}
 

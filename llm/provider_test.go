@@ -12,19 +12,16 @@ func TestCommandOptionJSONSerialization(t *testing.T) {
 		Description: "Test description",
 	}
 
-	// Test JSON marshaling
 	data, err := json.Marshal(option)
 	if err != nil {
 		t.Fatalf("Marshal() error = %v", err)
 	}
 
-	// Test JSON unmarshaling
 	var decoded CommandOption
 	if err := json.Unmarshal(data, &decoded); err != nil {
 		t.Fatalf("Unmarshal() error = %v", err)
 	}
 
-	// Verify fields match
 	if decoded.Title != option.Title {
 		t.Errorf("Title = %q, want %q", decoded.Title, option.Title)
 	}
@@ -37,7 +34,6 @@ func TestCommandOptionJSONSerialization(t *testing.T) {
 }
 
 func TestCommandOptionResponseParsing(t *testing.T) {
-	// Test parsing a typical API response
 	jsonResponse := `{
 		"options": [
 			{
