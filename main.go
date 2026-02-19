@@ -31,7 +31,19 @@ func main() {
 }
 
 func run() error {
-	// Parse command-line flags
+	// Parse command-line flags, supporting flags anywhere in the arg list.
+	// Go's flag package stops at the first non-flag argument, so
+	// "1lm my query --output=shell-function" would leave --output unparsed.
+	// Re-order args to put flags first so they're always processed.
+	var flagArgs, queryArgs []string
+	for _, arg := range os.Args[1:] {
+		if strings.HasPrefix(arg, "-") {
+			flagArgs = append(flagArgs, arg)
+		} else {
+			queryArgs = append(queryArgs, arg)
+		}
+	}
+	os.Args = append([]string{os.Args[0]}, append(flagArgs, queryArgs...)...)
 	flag.Parse()
 
 	// Load configuration
