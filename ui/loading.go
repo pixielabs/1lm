@@ -11,12 +11,10 @@ import (
 
 // LoadingModel represents the loading state with a spinner.
 type LoadingModel struct {
-	spinner    spinner.Model
-	generator  *commands.Generator
-	query      string
-	stage      commands.ProgressStage
-	progressCh chan commands.ProgressStage
-	err        error
+	spinner   spinner.Model
+	generator *commands.Generator
+	query     string
+	err       error
 }
 
 // optionsMsg is sent when options are loaded.
@@ -25,9 +23,10 @@ type optionsMsg struct {
 	err     error
 }
 
-// progressMsg is sent when generation progresses to a new stage.
-type progressMsg struct {
-	stage commands.ProgressStage
+// riskResultMsg is sent when background safety evaluation completes.
+type riskResultMsg struct {
+	options []commands.Option
+	err     error
 }
 
 // NewLoadingModel creates a new loading model.
@@ -42,51 +41,20 @@ func NewLoadingModel(generator *commands.Generator, query string) LoadingModel {
 	s.Style = TitleStyle
 
 	return LoadingModel{
-		spinner:    s,
-		generator:  generator,
-		query:      query,
-		stage:      commands.StageGenerating,
-		progressCh: make(chan commands.ProgressStage, 2),
+		spinner:   s,
+		generator: generator,
+		query:     query,
 	}
 }
 
 // Init initializes the model and starts the spinner + API call.
 func (m LoadingModel) Init() tea.Cmd {
-	return tea.Batch(
-		m.spinner.Tick,
-		m.loadOptions,
-		m.waitForProgress,
-	)
+	return tea.Batch(m.spinner.Tick, m.loadOptions)
 }
 
-// waitForProgress listens for progress updates from the channel.
-func (m LoadingModel) waitForProgress() tea.Msg {
-	stage, ok := <-m.progressCh
-	if !ok {
-		// Channel closed, no more progress updates
-		return nil
-	}
-	return progressMsg{stage: stage}
-}
-
-// loadOptions performs the API call asynchronously with progress updates.
+// loadOptions performs the generation API call asynchronously.
 func (m LoadingModel) loadOptions() tea.Msg {
-	// Call generator with progress callback
-	options, err := m.generator.GenerateWithProgress(
-		context.Background(),
-		m.query,
-		func(stage commands.ProgressStage) {
-			// Send progress update to channel (non-blocking)
-			select {
-			case m.progressCh <- stage:
-			default:
-			}
-		},
-	)
-
-	// Close progress channel when done
-	close(m.progressCh)
-
+	options, err := m.generator.Generate(context.Background(), m.query)
 	return optionsMsg{options: options, err: err}
 }
 
@@ -98,18 +66,11 @@ func (m LoadingModel) loadOptions() tea.Msg {
 func (m LoadingModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		// Allow quit during loading
 		if msg.String() == "ctrl+c" || msg.String() == "q" {
 			return m, tea.Quit
 		}
 
-	case progressMsg:
-		// Update stage and keep listening for more progress
-		m.stage = msg.stage
-		return m, m.waitForProgress
-
 	case optionsMsg:
-		// Options loaded - transition to selector or show error
 		if msg.err != nil {
 			m.err = msg.err
 			return m, tea.Quit
@@ -120,12 +81,10 @@ func (m LoadingModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 
-		// Transition to selector
-		selector := NewSelector(msg.options)
+		selector := NewSelector(msg.options, m.generator)
 		return selector, selector.Init()
 
 	default:
-		// Update spinner
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
@@ -142,17 +101,7 @@ func (m LoadingModel) View() string {
 		return ""
 	}
 
-	var message string
-	switch m.stage {
-	case commands.StageGenerating:
-		message = "Generating options..."
-	case commands.StageEvaluating:
-		message = "Evaluating safety..."
-	default:
-		message = "Processing..."
-	}
-
-	return fmt.Sprintf("\n%s %s\n", m.spinner.View(), message)
+	return fmt.Sprintf("\n%s Generating options...\n", m.spinner.View())
 }
 
 // Err returns any error encountered during loading.

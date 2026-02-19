@@ -1,9 +1,11 @@
 package ui
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pixielabs/1lm/commands"
@@ -13,35 +15,51 @@ import (
 
 // SelectorModel represents the bubbletea model for option selection.
 type SelectorModel struct {
-	options  []commands.Option
-	cursor   int
-	selected *commands.Option
-	quitting bool
-	width    int
+	options    []commands.Option
+	cursor     int
+	selected   *commands.Option
+	quitting   bool
+	width      int
+	generator  *commands.Generator
+	safetyDone bool
+	spinner    spinner.Model
 }
 
 // NewSelector creates a new option selector.
 //
-// options - The command options to choose from
+// options   - The command options to choose from
+// generator - The generator used to run background safety evaluation
 //
 // Returns an initialized SelectorModel.
-func NewSelector(options []commands.Option) SelectorModel {
+func NewSelector(options []commands.Option, generator *commands.Generator) SelectorModel {
 	// Get terminal width, default to 80 if unable to detect
 	width := 80
 	if w, _, err := term.GetSize(0); err == nil && w > 0 {
 		width = w
 	}
 
+	s := spinner.New()
+	s.Spinner = spinner.Dot
+	s.Style = CheckingStyle
+
 	return SelectorModel{
-		options: options,
-		cursor:  0,
-		width:   width,
+		options:   options,
+		cursor:    0,
+		width:     width,
+		generator: generator,
+		spinner:   s,
 	}
 }
 
-// Init initializes the model. Required by bubbletea.
+// Init fires the background safety evaluation and starts the spinner.
 func (m SelectorModel) Init() tea.Cmd {
-	return nil
+	return tea.Batch(m.evaluateSafety, m.spinner.Tick)
+}
+
+// evaluateSafety runs safety evaluation and returns a riskResultMsg.
+func (m SelectorModel) evaluateSafety() tea.Msg {
+	options, err := m.generator.EvaluateSafety(context.Background(), m.options)
+	return riskResultMsg{options: options, err: err}
 }
 
 // Update handles messages and updates the model. Required by bubbletea.
@@ -71,6 +89,20 @@ func (m SelectorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.selected = &m.options[m.cursor]
 			m.quitting = true
 			return m, tea.Quit
+		}
+
+	case riskResultMsg:
+		m.safetyDone = true
+		if msg.err == nil {
+			m.options = msg.options
+		}
+		return m, nil
+
+	case spinner.TickMsg:
+		if !m.safetyDone {
+			var cmd tea.Cmd
+			m.spinner, cmd = m.spinner.Update(msg)
+			return m, cmd
 		}
 	}
 
@@ -107,10 +139,12 @@ func (m SelectorModel) View() string {
 		// Wrap command and description to terminal width
 		command := CommandStyle.Width(contentWidth).Render(option.Command)
 
-		// Add risk warning if present
+		// Add risk warning if present, or animated placeholder while checking
 		var riskWarning string
 		if option.Risk != nil {
 			riskWarning = formatRiskWarning(option.Risk, m.cursor == i)
+		} else if !m.safetyDone {
+			riskWarning = m.spinner.View() + CheckingStyle.Render(" checking safety...")
 		}
 
 		description := DescriptionStyle.Width(contentWidth).Render(option.Description)

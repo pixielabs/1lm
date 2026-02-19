@@ -9,19 +9,6 @@ import (
 	"github.com/pixielabs/1lm/safety"
 )
 
-// ProgressStage represents the current stage of generation.
-type ProgressStage int
-
-const (
-	// StageGenerating indicates command generation is in progress.
-	StageGenerating ProgressStage = iota
-	// StageEvaluating indicates safety evaluation is in progress.
-	StageEvaluating
-)
-
-// ProgressCallback is called when generation progresses to a new stage.
-type ProgressCallback func(stage ProgressStage)
-
 // Generator handles command generation from natural language queries.
 type Generator struct {
 	client    llm.Client
@@ -48,32 +35,12 @@ func NewGenerator(client llm.Client, anthropicClient *anthropic.Client, model st
 // query - The natural language description
 //
 // Returns a slice of Options and any error encountered.
-//
-// Examples
-//
-//   gen := commands.NewGenerator(client, anthropicClient, model)
-//   options, err := gen.Generate(ctx, "search git history for myFunction")
-//   if err != nil {
-//       log.Fatal(err)
-//   }
 func (g *Generator) Generate(ctx context.Context, query string) ([]Option, error) {
-	return g.GenerateWithProgress(ctx, query, nil)
-}
-
-// GenerateWithProgress creates command options with progress callbacks.
-//
-// ctx      - The context for the request
-// query    - The natural language description
-// progress - Optional callback for progress updates
-//
-// Returns a slice of Options and any error encountered.
-func (g *Generator) GenerateWithProgress(ctx context.Context, query string, progress ProgressCallback) ([]Option, error) {
 	llmOptions, err := g.client.GenerateOptions(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate options: %w", err)
 	}
 
-	// Convert LLM options to command options
 	options := make([]Option, len(llmOptions))
 	for i, opt := range llmOptions {
 		options[i] = Option{
@@ -83,28 +50,34 @@ func (g *Generator) GenerateWithProgress(ctx context.Context, query string, prog
 		}
 	}
 
-	// Notify progress: moving to safety evaluation stage
-	if progress != nil {
-		progress(StageEvaluating)
-	}
+	return options, nil
+}
 
-	// Evaluate commands for safety risks
-	commands := make([]string, len(options))
+// EvaluateSafety evaluates commands for safety risks and returns updated options.
+// This is best-effort: returns nil, err on failure so callers can ignore silently.
+//
+// ctx     - The context for the request
+// options - The options to evaluate
+//
+// Returns updated options with Risk fields populated, or nil and an error.
+func (g *Generator) EvaluateSafety(ctx context.Context, options []Option) ([]Option, error) {
+	cmds := make([]string, len(options))
 	for i, opt := range options {
-		commands[i] = opt.Command
+		cmds[i] = opt.Command
 	}
 
-	risks, err := g.evaluator.Evaluate(ctx, commands)
+	risks, err := g.evaluator.Evaluate(ctx, cmds)
 	if err != nil {
-		// Log error but don't fail - safety check is best-effort
-		// Safety evaluation failure shouldn't prevent command generation
-	} else {
-		for i, risk := range risks {
-			if risk != nil && risk.Level != safety.RiskNone {
-				options[i].Risk = risk
-			}
+		return nil, err
+	}
+
+	result := make([]Option, len(options))
+	copy(result, options)
+	for i, risk := range risks {
+		if risk != nil && risk.Level != safety.RiskNone {
+			result[i].Risk = risk
 		}
 	}
 
-	return options, nil
+	return result, nil
 }

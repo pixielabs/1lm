@@ -38,4 +38,9 @@ var (
 	WarningHighStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("196")).
 				Bold(true)
+
+	// CheckingStyle for the per-option safety check placeholder
+	CheckingStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("238")).
+			Italic(true)
 )
